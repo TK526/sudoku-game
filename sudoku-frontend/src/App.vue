@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// =============================
-// IMPORTS
-// =============================
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 
 // Import Components
@@ -13,14 +10,9 @@ import GameEndModal from './components/GameEndModal.vue';
 
 // Import Services and Types
 import api from './services/api';
-import type {
-    CellPosition,
-    LeaderboardData
-} from './types'; // Assuming types are defined in src/types/index.ts
+import type { CellPosition, LeaderboardData } from './types';
 
-// =============================
-// STATE VARIABLES
-// =============================
+// State variables
 const gameId = ref<string | null>(null);
 const difficulty = ref<string>('beginner');
 const grid = ref<number[][]>([]);
@@ -30,23 +22,21 @@ const errors = ref<number>(0);
 const hintsUsed = ref<number>(0);
 const maxHints = ref<number>(10);
 const visibleCount = ref<number>(0);
-const gameStartTime = ref<number | null>(null); // Timestamp (ms)
-const elapsedTime = ref<number>(0); // Seconds
-const timerInterval = ref<number | null>(null); // Interval ID
+const gameStartTime = ref<number | null>(null);
+const elapsedTime = ref<number>(0);
+const timerInterval = ref<number | null>(null);
 const isPaused = ref<boolean>(false);
 const isCompleted = ref<boolean>(false);
-const isLoading = ref<boolean>(false); // Global loading state
+const isLoading = ref<boolean>(false);
 const showGameEndModal = ref<boolean>(false);
 const finalScore = ref<number | null>(null);
-const errorCells = reactive<Set<string>>(new Set()); // 'row-col'
-const hintCells = reactive<Set<string>>(new Set()); // 'row-col'
+const errorCells = reactive<Set<string>>(new Set());
+const hintCells = reactive<Set<string>>(new Set());
 const leaderboardData = ref<LeaderboardData | null>(null);
-const animatingRows = reactive<Set<number>>(new Set()); // Animation
-const animatingCols = reactive<Set<number>>(new Set()); // Animation
+const animatingRows = reactive<Set<number>>(new Set());
+const animatingCols = reactive<Set<number>>(new Set());
 
-// =============================
-// COMPUTED PROPERTIES
-// =============================
+// Computed properties
 const gameInProgress = computed<boolean>(() => gameId.value !== null && !isCompleted.value);
 const hintsRemaining = computed<number>(() => maxHints.value - hintsUsed.value);
 const gridDimension = computed<number>(() => grid.value?.length || 9);
@@ -65,10 +55,6 @@ const digitCounts = computed<{ [key: number]: number }>(() => {
     return counts;
 });
 
-// =============================
-// METHODS
-// =============================
-
 // Fetch Leaderboard Data
 const fetchLeaderboard = async (): Promise<void> => {
     isLoading.value = true;
@@ -83,10 +69,31 @@ const fetchLeaderboard = async (): Promise<void> => {
     }
 };
 
+// Reset Game State
+const resetGameState = (): void => {
+    stopTimer();
+    gameId.value = null; 
+    grid.value = []; 
+    initialGrid.value = [];
+    selectedCell.value = null; 
+    errors.value = 0; 
+    hintsUsed.value = 0;
+    visibleCount.value = 0; 
+    gameStartTime.value = null; 
+    elapsedTime.value = 0;
+    isPaused.value = false; 
+    isCompleted.value = false; 
+    showGameEndModal.value = false;
+    finalScore.value = null; 
+    errorCells.clear(); 
+    hintCells.clear();
+    animatingRows.clear();
+    animatingCols.clear();
+};
+
 // Start a New Game
 const startGame = async (selectedDifficulty: string): Promise<void> => {
     if (isLoading.value) return;
-    console.log("[Debug] startGame - Starting...");
     isLoading.value = true;
     resetGameState();
     difficulty.value = selectedDifficulty;
@@ -100,49 +107,33 @@ const startGame = async (selectedDifficulty: string): Promise<void> => {
         initialGrid.value = hiddenGrid.map(row => [...row]);
         visibleCount.value = initialVisibleCount;
         gameStartTime.value = Date.now();
-        console.log(`[Debug] startGame - Game state updated. ID: ${gameId.value}`);
         startTimer();
     } catch (err: any) {
-        console.error("[Debug] startGame - Error:", err);
+        console.error("Error starting game:", err);
         alert(`Error starting game: ${err.response?.data?.message || err.message || 'Unknown error'}`);
         resetGameState();
     } finally {
         isLoading.value = false;
-        console.log("[Debug] startGame - Finished.");
     }
 };
 
 // Handle the 'newGame' event emitted by Controls
 const handleNewGame = (): void => {
-    console.log("[Debug] handleNewGame - Resetting for new game selection.");
     resetGameState();
-    // Now the difficulty selector should show because gameInProgress is false
-};
-
-// Reset Game State
-const resetGameState = (): void => {
-    console.log("[Debug] resetGameState");
-    stopTimer();
-    gameId.value = null; grid.value = []; initialGrid.value = [];
-    selectedCell.value = null; errors.value = 0; hintsUsed.value = 0;
-    visibleCount.value = 0; gameStartTime.value = null; elapsedTime.value = 0;
-    isPaused.value = false; isCompleted.value = false; showGameEndModal.value = false;
-    finalScore.value = null; errorCells.clear(); hintCells.clear();
-    animatingRows.clear(); // Animation
-    animatingCols.clear(); // Animation
 };
 
 // Handle Cell Selection from Grid Component
 const handleCellSelect = (position: CellPosition): void => {
     if (isPaused.value || isCompleted.value) return;
     if (initialGrid.value[position.row]?.[position.col] !== 0) {
-        selectedCell.value = null; return;
+        selectedCell.value = null; 
+        return;
     }
     selectedCell.value = position;
     errorCells.delete(`${position.row}-${position.col}`);
 };
 
-//Animation
+// Check for completed rows and columns and trigger animations
 const checkRowColCompletion = (row: number, col: number): void => {
     const size = gridDimension.value;
     let rowComplete = true;
@@ -169,24 +160,20 @@ const checkRowColCompletion = (row: number, col: number): void => {
     if (colComplete) animatingCols.add(col);
 
     // Clear animation classes after a delay
-    if (rowComplete || colComplete) {
-        // Use separate timeouts in case both complete simultaneously
-        if (rowComplete) {
-            setTimeout(() => animatingRows.delete(row), 600); // Shorter duration for shake
-        }
-        if (colComplete) {
-            setTimeout(() => animatingCols.delete(col), 600); // Shorter duration for shake
-        }
-        console.log(`[Debug] Animating Row: ${rowComplete ? row : 'N/A'}, Col: ${colComplete ? col : 'N/A'}`);
+    if (rowComplete) {
+        setTimeout(() => animatingRows.delete(row), 600);
+    }
+    if (colComplete) {
+        setTimeout(() => animatingCols.delete(col), 600);
     }
 };
 
-// Handle Number Input from Keyboard
+// Handle Number Input from Keyboard or Number Pad
 const handleNumberInput = async (value: number): Promise<void> => {
     if (!selectedCell.value || isLoading.value || isCompleted.value || isPaused.value) return;
 
     const { row, col } = selectedCell.value;
-    if (initialGrid.value[row]?.[col] !== 0 || hintCells.has(`${row}-${col}`)) return; // Don't overwrite hints
+    if (initialGrid.value[row]?.[col] !== 0 || hintCells.has(`${row}-${col}`)) return;
 
     const oldValue = grid.value[row][col];
     if (oldValue === value) return;
@@ -195,29 +182,28 @@ const handleNumberInput = async (value: number): Promise<void> => {
 
     try {
         const response = await api.checkValue({
-            gameId: gameId.value!, // Assert non-null as game should be in progress
+            gameId: gameId.value!,
             row: row,
-            column: col, // *** Ensure this matches CheckValuePayload in api.ts ***
+            column: col,
             value: value
         });
         const { correct, visibleValuesCount: newVisibleCount, errors: newErrors } = response.data;
-        visibleCount.value = newVisibleCount; errors.value = newErrors; // Update state from backend
+        visibleCount.value = newVisibleCount;
+        errors.value = newErrors;
 
         const cellKey = `${row}-${col}`;
         correct ? errorCells.delete(cellKey) : errorCells.add(cellKey);
 
         if (correct) {
-            // *** CALL SIMPLIFIED COMPLETION CHECK HERE ***
             checkRowColCompletion(row, col);
-            // Check for overall game completion
-            if (newVisibleCount >= 81) { await checkGameCompletion(); }
+            if (newVisibleCount >= 81) {
+                await checkGameCompletion();
+            }
         }
     } catch (err: any) {
-        console.error("[Debug] handleNumberInput - Error:", err);
+        console.error("Error checking value:", err);
         alert(`Error checking value: ${err.response?.data?.message || err.message || 'Unknown error'}`);
         grid.value[row][col] = oldValue; // Revert on error
-    } finally {
-        // isLoading handled by checkGameCompletion if called
     }
 };
 
@@ -227,7 +213,8 @@ const clearSelectedCell = (): void => {
     const { row, col } = selectedCell.value;
     const cellKey = `${row}-${col}`;
     if (initialGrid.value[row]?.[col] === 0 && !hintCells.has(cellKey) && grid.value[row]?.[col] !== 0) {
-        grid.value[row][col] = 0; errorCells.delete(cellKey);
+        grid.value[row][col] = 0;
+        errorCells.delete(cellKey);
     }
 };
 
@@ -244,18 +231,20 @@ const requestHint = async (): Promise<void> => {
             if (hintData.visibleValuesCount !== undefined) visibleCount.value = hintData.visibleValuesCount;
         } else if (hintData.rowIndex !== undefined && hintData.columnIndex !== undefined && hintData.value !== undefined) {
             grid.value[hintData.rowIndex][hintData.columnIndex] = hintData.value;
-            hintsUsed.value++; // Increment after successful request
+            hintsUsed.value++;
             if (hintData.visibleValuesCount !== undefined) visibleCount.value = hintData.visibleValuesCount;
             const cellKey = `${hintData.rowIndex}-${hintData.columnIndex}`;
-            hintCells.add(cellKey); errorCells.delete(cellKey);
+            hintCells.add(cellKey);
+            errorCells.delete(cellKey);
 
             checkRowColCompletion(hintData.rowIndex, hintData.columnIndex);
 
-            // Check for overall game completion
-            if (visibleCount.value >= 81) { await checkGameCompletion(); }
+            if (visibleCount.value >= 81) {
+                await checkGameCompletion();
+            }
         }
     } catch (err: any) {
-        console.error("[Debug] requestHint - Error:", err);
+        console.error("Error getting hint:", err);
         alert(`Error getting hint: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
@@ -275,16 +264,14 @@ const checkGameCompletion = async (): Promise<void> => {
                 const scoreResponse = await api.getScore({ gameId: gameId.value });
                 finalScore.value = scoreResponse.data;
             } catch (scoreErr: any) {
-                console.error("[Debug] checkGameCompletion - Error fetching score:", scoreErr);
-                finalScore.value = null; // Indicate score fetch failed
+                console.error("Error fetching score:", scoreErr);
+                finalScore.value = null;
                 alert(`Could not fetch final score: ${scoreErr.response?.data?.message || scoreErr.message || 'Unknown error'}`);
             }
-            showGameEndModal.value = true; // Show modal regardless of score fetch success
-        } else {
-             console.log("[Debug] checkGameCompletion - Backend says game is NOT complete yet.");
+            showGameEndModal.value = true;
         }
     } catch (err: any) {
-        console.error("[Debug] checkGameCompletion - Error:", err);
+        console.error("Error checking completion:", err);
         alert(`Error checking completion: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
@@ -298,11 +285,11 @@ const submitScore = async (username: string): Promise<void> => {
     try {
         await api.addLeaderboardRecord({ username, score: finalScore.value, difficulty: difficulty.value });
         showGameEndModal.value = false;
-        await fetchLeaderboard(); // Refresh list
+        await fetchLeaderboard();
         alert(`Score submitted for ${username}!`);
-        resetGameState(); // Reset after submission
+        resetGameState();
     } catch (err: any) {
-        console.error("[Debug] submitScore - Error:", err);
+        console.error("Error submitting score:", err);
         alert(`Error submitting score: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
@@ -319,12 +306,20 @@ const startTimer = (): void => {
         }
     }, 1000);
 };
+
 const stopTimer = (): void => {
-    if (timerInterval.value !== null) { clearInterval(timerInterval.value); timerInterval.value = null; }
+    if (timerInterval.value !== null) {
+        clearInterval(timerInterval.value);
+        timerInterval.value = null;
+    }
 };
+
 const togglePause = (): void => {
-    if (!isCompleted.value) { isPaused.value = !isPaused.value; }
+    if (!isCompleted.value) {
+        isPaused.value = !isPaused.value;
+    }
 };
+
 const formatTime = (totalSeconds: number): string => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -346,31 +341,63 @@ const handleKeyDown = (event: KeyboardEvent): void => {
         if (isEditable) {
             if (key >= '1' && key <= '9') {
                 const digit = parseInt(key);
-                if (digitCounts.value[digit] >= 9) { event.preventDefault(); return; } // Prevent if count >= 9
-                event.preventDefault(); handleNumberInput(digit); return;
+                if (digitCounts.value[digit] >= 9) {
+                    event.preventDefault();
+                    return;
+                }
+                event.preventDefault();
+                handleNumberInput(digit);
+                return;
             } else if (key === 'Backspace' || key === 'Delete') {
-                event.preventDefault(); clearSelectedCell(); return;
+                event.preventDefault();
+                clearSelectedCell();
+                return;
             }
         }
-        // Arrow Key Navigation (works even if cell isn't editable)
-        let newRow = row; let newCol = col; let moved = false;
-        if (key === 'ArrowUp') { newRow = Math.max(0, row - 1); moved = true; }
-        else if (key === 'ArrowDown') { newRow = Math.min(gridDimension.value - 1, row + 1); moved = true; }
-        else if (key === 'ArrowLeft') { newCol = Math.max(0, col - 1); moved = true; }
-        else if (key === 'ArrowRight') { newCol = Math.min(gridDimension.value - 1, col + 1); moved = true; }
-        if (moved) { event.preventDefault(); handleCellSelect({ row: newRow, col: newCol }); return; }
+        
+        // Arrow Key Navigation
+        let newRow = row;
+        let newCol = col;
+        let moved = false;
+        
+        if (key === 'ArrowUp') {
+            newRow = Math.max(0, row - 1);
+            moved = true;
+        } else if (key === 'ArrowDown') {
+            newRow = Math.min(gridDimension.value - 1, row + 1);
+            moved = true;
+        } else if (key === 'ArrowLeft') {
+            newCol = Math.max(0, col - 1);
+            moved = true;
+        } else if (key === 'ArrowRight') {
+            newCol = Math.min(gridDimension.value - 1, col + 1);
+            moved = true;
+        }
+        
+        if (moved) {
+            event.preventDefault();
+            handleCellSelect({ row: newRow, col: newCol });
+            return;
+        }
     }
 
     // Global keys
-    if (key.toUpperCase() === 'P') { event.preventDefault(); togglePause(); }
-    if (key.toUpperCase() === 'H') { event.preventDefault(); requestHint(); }
+    if (key.toUpperCase() === 'P') {
+        event.preventDefault();
+        togglePause();
+    }
+    if (key.toUpperCase() === 'H') {
+        event.preventDefault();
+        requestHint();
+    }
 };
 
-// --- Lifecycle Hooks ---
+// Lifecycle Hooks
 onMounted(() => {
     fetchLeaderboard();
     window.addEventListener('keydown', handleKeyDown);
 });
+
 onUnmounted(() => {
     stopTimer();
     window.removeEventListener('keydown', handleKeyDown);
@@ -398,7 +425,6 @@ onUnmounted(() => {
 
     <main class="main-content">
       <div class="game-area">
-        <!-- Show grid container only when gameId is set -->
         <SudokuGrid
           v-if="gameId"
           :grid-data="grid"
@@ -413,14 +439,12 @@ onUnmounted(() => {
           :is-completed="isCompleted"
           @cell-selected="handleCellSelect"
         ></SudokuGrid>
-        <!-- Show prompt when no game is active -->
+        
         <div v-else class="start-prompt">
           <p>Select a difficulty and press "Start Game" to begin.</p>
-           <!-- Show loading only when trying to start a game -->
-           <div v-if="isLoading">Loading...</div>
+          <div v-if="isLoading">Loading...</div>
         </div>
 
-        <!-- Show number pad only during active (not completed) game -->
         <NumberPad
            v-if="gameInProgress"
            :digit-counts="digitCounts"
@@ -429,7 +453,6 @@ onUnmounted(() => {
       </div>
 
       <aside class="sidebar">
-         <!-- Show loading indicator for leaderboard only if loading AND data hasn't arrived yet -->
          <Leaderboard
             :leaderboard-data="leaderboardData"
             :is-loading="isLoading && leaderboardData === null"
@@ -437,7 +460,6 @@ onUnmounted(() => {
       </aside>
     </main>
 
-    <!-- Show modal only when flag is true -->
     <GameEndModal
       v-if="showGameEndModal"
       :score="finalScore"
@@ -447,12 +469,10 @@ onUnmounted(() => {
       @close="showGameEndModal = false"
     ></GameEndModal>
 
-    <!-- Global Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay"><span>Loading...</span></div>
   </div>
 </template>
 
-<!-- Global Styles -->
 <style>
  :root {
    --border-color: #bbb; --strong-border-color: #333; --main-bg: #f8f8f8;
@@ -474,26 +494,16 @@ onUnmounted(() => {
    padding: 1em;
    gap: 1.5em;
    flex-grow: 1;
-   /* Add align-items start to prevent vertical stretching if content height varies */
    align-items: flex-start;
  }
 
  .game-area {
-    /* flex-grow: 1; Remove flex-grow or reduce significantly */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.8em;
-    /* *** ADD a width related to the grid's max-width *** */
-    /* Match the max-width used in SudokuGrid.vue's container */
-    width: 540px; /* Or slightly more to accommodate padding/margins */
-    max-width: 100%; /* Prevent overflow on very small screens */
-    /* min-height: 400px; Keep min-height */
- }
-
- /* Keep the prompt centering styles */
- .game-area.game-area--prompt {
-    justify-content: center;
+    width: 540px;
+    max-width: 100%;
  }
 
  .start-prompt {
@@ -501,11 +511,9 @@ onUnmounted(() => {
      text-align: center;
      color: #555;
      font-size: 1.1em;
-     /* Ensure it takes the width of the game area */
      width: 100%;
  }
  .start-prompt div { margin-top: 10px; font-style: italic; }
-
 
  .loading-overlay {
      position: fixed; inset: 0;
@@ -518,19 +526,16 @@ onUnmounted(() => {
  }
 
  .sidebar {
-    flex-basis: 280px; flex-shrink: 0; /* Keep sidebar width fixed */
+    flex-basis: 280px; flex-shrink: 0;
     background-color: var(--sidebar-bg); padding: 1em;
     border-left: 1px solid var(--border-color);
-    /* Ensure sidebar maintains height */
-    align-self: stretch; /* Make it stretch to height of main-content */
+    align-self: stretch;
  }
 
- /* Responsive styles remain largely the same */
  @media (max-width: 800px) {
-     .main-content { flex-direction: column; align-items: center; /* Center items when stacked */ }
-     /* Remove fixed width for game-area on small screens */
+     .main-content { flex-direction: column; align-items: center; }
      .game-area { width: 100%; }
-     .sidebar { flex-basis: auto; width: 100%; border-left: none; border-top: 1px solid var(--border-color); padding: 0.5em; align-self: auto; /* Reset stretch */ }
+     .sidebar { flex-basis: auto; width: 100%; border-left: none; border-top: 1px solid var(--border-color); padding: 0.5em; align-self: auto; }
  }
 
  button { padding: 8px 15px; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--button-bg); cursor: pointer; font-size: 0.95rem; transition: background-color 0.2s ease; }

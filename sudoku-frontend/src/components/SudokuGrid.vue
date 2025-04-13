@@ -1,5 +1,5 @@
 <!-- ./components/SudokuGrid.vue -->
-<script setup lang="ts"> // Added lang="ts"
+<script setup lang="ts">
 import { computed } from 'vue';
 import type { CellPosition } from '../types'; // Import shared type
 
@@ -63,7 +63,6 @@ const getCellClass = (row: number, col: number): string[] => {
   if (props.animatingRows.has(row) || props.animatingCols.has(col)) {
       classes.push('animate-shake-unit'); // Use new class name
   }
-  // *** END CHECK ***
 
   return classes;
 };
@@ -104,7 +103,6 @@ const selectCell = (row: number, col: number): void => {
 </template>
 
 <style scoped>
-/* Styles remain the same as provided in the dump */
  .sudoku-grid-container {
     position: relative;
     margin-bottom: 1em;
@@ -215,7 +213,6 @@ const selectCell = (row: number, col: number): void => {
   50% { transform: translateX(4px); }
 }
 .sudoku-cell.error {
-   /* ... other error styles ... */
    animation: errorShake 0.4s ease-in-out; /* Apply specific error shake */
 }
 
@@ -228,8 +225,7 @@ const selectCell = (row: number, col: number): void => {
 .sudoku-cell.animate-shake-unit {
   /* Apply completion shake animation once */
   animation: completionShake 0.6s ease-in-out 1; /* Adjust timing (0.6s) */
-  /* Optional: Add a subtle background highlight during the shake */
-  /* background-color: var(--cell-selected-bg); */
+  /* background-color: var(--cell-selected-bg); */ /* Optional: Change color during shake */
   z-index: 5; /* Ensure animated cells are visually on top */
 }
 
@@ -243,14 +239,10 @@ Winning Animation
 
 /* Apply animation to all cells when game is completed */
 .game-completed .sudoku-cell {
-  /* Apply animation with delay based on position? Or all at once? */
-  /* Let's try all at once first */
   animation: celebrate 1s ease-in-out 1 forwards; /* Run once and stay at end state */
-  /* Optional: Add slight delay */
-  /* animation-delay: 0.1s; */
+  /* animation-delay: 0.1s; */ /* Optional: staggered delay */
 }
 
-/* You might want to override other styles during celebration */
 .game-completed .sudoku-cell.selected {
     background-color: var(--color-success); /* Keep win color */
 }
