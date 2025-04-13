@@ -35,6 +35,9 @@ const hintCells = reactive<Set<string>>(new Set());
 const leaderboardData = ref<LeaderboardData | null>(null);
 const animatingRows = reactive<Set<number>>(new Set());
 const animatingCols = reactive<Set<number>>(new Set());
+// Add a new variable to track the total pause duration
+const pauseDuration = ref<number>(0);
+const pauseStartTime = ref<number | null>(null)
 
 // Computed properties
 const gameInProgress = computed<boolean>(() => gameId.value !== null && !isCompleted.value);
@@ -69,23 +72,45 @@ const fetchLeaderboard = async (): Promise<void> => {
     }
 };
 
+// Function to handle tab visibility changes
+const handleVisibilityChange = (): void => {
+    if (document.hidden && !isPaused.value && !isCompleted.value) {
+        togglePause(); // Automatically pause the game when the tab is hidden
+    }
+};
+
+// Lifecycle hooks
+onMounted(() => {
+    fetchLeaderboard();
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('visibilitychange', handleVisibilityChange); // Listen for tab visibility changes
+});
+
+onUnmounted(() => {
+    stopTimer();
+    window.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('visibilitychange', handleVisibilityChange); // Clean up the event listener
+});
+
 // Reset Game State
 const resetGameState = (): void => {
     stopTimer();
-    gameId.value = null; 
-    grid.value = []; 
+    gameId.value = null;
+    grid.value = [];
     initialGrid.value = [];
-    selectedCell.value = null; 
-    errors.value = 0; 
+    selectedCell.value = null;
+    errors.value = 0;
     hintsUsed.value = 0;
-    visibleCount.value = 0; 
-    gameStartTime.value = null; 
+    visibleCount.value = 0;
+    gameStartTime.value = null;
     elapsedTime.value = 0;
-    isPaused.value = false; 
-    isCompleted.value = false; 
+    pauseDuration.value = 0; // Reset pause duration
+    pauseStartTime.value = null;
+    isPaused.value = false;
+    isCompleted.value = false;
     showGameEndModal.value = false;
-    finalScore.value = null; 
-    errorCells.clear(); 
+    finalScore.value = null;
+    errorCells.clear();
     hintCells.clear();
     animatingRows.clear();
     animatingCols.clear();
@@ -302,7 +327,8 @@ const startTimer = (): void => {
     if (!gameStartTime.value) gameStartTime.value = Date.now();
     timerInterval.value = window.setInterval(() => {
         if (!isPaused.value && !isCompleted.value && gameStartTime.value) {
-            elapsedTime.value = Math.floor((Date.now() - gameStartTime.value) / 1000);
+            // Subtract the total pause duration from the elapsed time
+            elapsedTime.value = Math.floor((Date.now() - gameStartTime.value - pauseDuration.value) / 1000);
         }
     }, 1000);
 };
@@ -317,6 +343,15 @@ const stopTimer = (): void => {
 const togglePause = (): void => {
     if (!isCompleted.value) {
         isPaused.value = !isPaused.value;
+
+        if (isPaused.value) {
+            // Record the time when the game is paused
+            pauseStartTime.value = Date.now();
+        } else if (pauseStartTime.value !== null) {
+            // Add the duration of the current pause to the total pause duration
+            pauseDuration.value += Date.now() - pauseStartTime.value;
+            pauseStartTime.value = null;
+        }
     }
 };
 
