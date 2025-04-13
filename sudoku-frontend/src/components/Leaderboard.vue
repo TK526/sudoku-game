@@ -1,5 +1,5 @@
 <!-- ./components/Leaderboard.vue -->
-<script setup lang="ts"> // ADD lang="ts"
+<script setup lang="ts">
 import type { LeaderboardData } from '../types';
 
 interface Props {
@@ -23,7 +23,6 @@ const capitalize = (s: string): string => s ? s.charAt(0).toUpperCase() + s.slic
 <template>
   <div class="leaderboard">
     <h3>🏆 Leaderboard</h3>
-    <!-- v-if/else-if logic was corrected previously -->
     <div v-if="isLoading" class="loading-message">Loading...</div>
     <div v-else-if="!leaderboardData" class="no-data">
        No records yet. Play a game!
@@ -36,7 +35,6 @@ const capitalize = (s: string): string => s ? s.charAt(0).toUpperCase() + s.slic
        <template v-else>
            <div v-for="difficulty in difficultyOrder" :key="difficulty" class="difficulty-section">
              <h4>{{ capitalize(difficulty) }}</h4>
-             <!-- Access is now safe because of v-else-if check -->
              <ul v-if="leaderboardData[difficulty]?.length > 0">
                <li v-for="(record, index) in leaderboardData[difficulty]" :key="record.id || index">
                  <span class="rank">{{ index + 1 }}.</span>
@@ -52,10 +50,9 @@ const capitalize = (s: string): string => s ? s.charAt(0).toUpperCase() + s.slic
 </template>
 
 <style scoped>
-/* Styles remain the same as provided in the dump */
 .leaderboard {
   text-align: left;
-  padding: 10px; /* Add some padding inside the sidebar */
+  padding: 10px;
 }
 
 .leaderboard h3 {

@@ -1,5 +1,5 @@
 <!-- ./components/NumberPad.vue -->
-<script setup lang="ts"> // Added lang="ts"
+<script setup lang="ts">
 
 // Define Props interface
 interface Props {
@@ -37,7 +37,6 @@ const isDigitComplete = (num: number): boolean => {
 </template>
 
 <style scoped>
-/* Styles remain the same as provided in the dump */
 .number-pad {
   display: flex;
   justify-content: center;

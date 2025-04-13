@@ -1,6 +1,5 @@
-<!-- ./components/Controls.vue -->
 <script setup lang="ts">
-import { ref, watch } from 'vue'; // Import watch
+import { ref, watch } from 'vue';
 
 // Define component props
 interface Props {
@@ -14,12 +13,12 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-// Define component emits - ADD 'newGame'
+// Define component emits
 const emit = defineEmits<{
   (event: 'startGame', difficulty: string): void;
   (event: 'useHint'): void;
   (event: 'togglePause'): void;
-  (event: 'newGame'): void; // Add this emit
+  (event: 'newGame'): void;
 }>();
 
 // Local state
@@ -41,7 +40,7 @@ const formatTime = (totalSeconds: number): string => {
 };
 
 // Event handlers
-const handleStart = (): void => { // This is for the initial "Start Game" button
+const handleStart = (): void => {
     if (!props.isLoading) {
         emit('startGame', selectedDifficulty.value);
     }
@@ -59,13 +58,11 @@ const handlePause = (): void => {
     }
 };
 
-// *** ADD this handler for the "New Game" button ***
 const handleNewGameClick = (): void => {
     if (!props.isLoading) {
-        emit('newGame'); // Emit the reset event
+        emit('newGame');
     }
 };
-
 </script>
 
 <template>
@@ -86,14 +83,13 @@ const handleNewGameClick = (): void => {
     <!-- In-Game Controls -->
     <div v-if="gameInProgress" class="game-info">
       <span>Level: {{ currentDifficulty }}</span>
-       <span>Errors: {{ errors }}</span>
+      <span>Errors: {{ errors }}</span>
       <span>Time: {{ formatTime(elapsedTime) }}</span>
       <button @click="handlePause" :disabled="isLoading">{{ isPaused ? 'Resume' : 'Pause' }}</button>
       <button @click="handleHint" :disabled="isLoading || isPaused || hintsRemaining <= 0">
         💡 Hint ({{ hintsRemaining }})
       </button>
-       <!-- *** CHANGE @click here *** -->
-       <button @click="handleNewGameClick" :disabled="isLoading">New Game</button>
+      <button @click="handleNewGameClick" :disabled="isLoading">New Game</button>
     </div>
   </div>
 </template>
@@ -114,57 +110,53 @@ const handleNewGameClick = (): void => {
     gap: 10px;
 }
 
- label {
+label {
     font-weight: bold;
-    /* Ensure label text is dark */
     color: #333;
- }
+}
 
- select, button {
+select, button {
     padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: var(--button-bg);
     cursor: pointer;
     font-size: 0.9rem;
-    /* --- ADD THIS --- */
-    color: #333; /* Set default text color to dark grey */
-    text-align: center; /* Center text in button/select */
- }
+    color: #333;
+    text-align: center;
+}
 
- /* --- ADD THIS to specifically style select dropdown text --- */
- select {
+select {
     min-width: 120px;
-    appearance: none; /* Allows custom styling, removes default arrow sometimes */
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Simple dropdown arrow */
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
     background-repeat: no-repeat;
     background-position: right .7em top 50%;
     background-size: .65em auto;
-    padding-right: 2em; /* Add space for the arrow */
-    text-align-last: center; /* Center selected option text */
- }
-  /* Style for the options within the dropdown */
- select option {
-     color: #000; /* Ensure options are black */
-     background-color: #fff; /* Ensure background is white */
- }
+    padding-right: 2em;
+    text-align-last: center;
+}
 
- button:hover:not(:disabled) {
+select option {
+    color: #000;
+    background-color: #fff;
+}
+
+button:hover:not(:disabled) {
     background-color: var(--button-hover-bg);
- }
+}
 
- button:disabled {
+button:disabled {
     background-color: var(--button-disabled-bg);
-    color: var(--button-disabled-text); /* Keep disabled text grey */
+    color: var(--button-disabled-text);
     cursor: not-allowed;
- }
+}
 
- /* Keep span styles the same */
- span {
+span {
     font-size: 0.9rem;
     background-color: #fff;
     padding: 5px 8px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
- }
+}
 </style>
