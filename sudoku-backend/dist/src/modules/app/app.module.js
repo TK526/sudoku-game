@@ -14,6 +14,7 @@ const game_module_1 = require("../game/game.module");
 const leaderboard_module_1 = require("../leaderboard/leaderboard.module");
 const typeorm_1 = require("@nestjs/typeorm");
 const config_1 = require("@nestjs/config");
+const data_source_1 = require("../../../data-source");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,20 +26,7 @@ exports.AppModule = AppModule = __decorate([
                 envFilePath: '.env',
                 ignoreEnvFile: process.env.NODE_ENV === 'production',
             }),
-            typeorm_1.TypeOrmModule.forRootAsync({
-                imports: [config_1.ConfigModule],
-                inject: [config_1.ConfigService],
-                useFactory: (configService) => ({
-                    type: 'mysql',
-                    host: configService.get('DB_HOST', 'localhost'),
-                    port: configService.get('DB_PORT', 3306),
-                    username: configService.get('DB_USERNAME', 'root'),
-                    password: configService.get('DB_PASSWORD', ''),
-                    database: configService.get('DB_DATABASE', 'sudoku'),
-                    autoLoadEntities: true,
-                    synchronize: configService.get('DB_SYNC', true),
-                }),
-            }),
+            typeorm_1.TypeOrmModule.forRoot(data_source_1.typeOrmModuleOptions),
             game_module_1.GameModule,
             leaderboard_module_1.LeaderboardModule,
         ],

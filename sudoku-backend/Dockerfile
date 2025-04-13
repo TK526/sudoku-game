@@ -31,4 +31,7 @@
     COPY package.json ./package.json
     
     EXPOSE 3000
+    # Run migration first, then start the app
+    CMD npm run migration:run && node dist/src/main
+    
     CMD node dist/src/main
