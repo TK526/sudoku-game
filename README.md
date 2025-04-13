@@ -18,7 +18,7 @@ Before you begin, ensure you have the following installed on your system:
 
 *   **Docker:** The core containerization platform. Download from [Docker](https://www.docker.com/products/docker-desktop/).
 *   **Docker Compose:** Included with Docker Desktop on Mac/Windows. For Linux, follow the [official installation guide](https://docs.docker.com/compose/install/).
-*   **(Optional) Node.js & npm/yarn:** Required only if you want to run the frontend or backend *outside* of Docker for development or debugging (e.g., `npm install`, `npm run dev`). Version specified in Dockerfiles (e.g., Node.js 18.x) is recommended.
+*   **(Optional) Node.js & npm/yarn:** Required only if you want to run the frontend or backend *outside* of Docker for development or debugging (e.g., `npm install`, `npm run dev`). Version specified in Dockerfiles (e.g., Node.js 22.x) is recommended.
 *   **(Optional) Git:** For cloning the repository.
 
 # Steps to start
