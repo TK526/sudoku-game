@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { useToast } from 'vue-toastification';
 
 // Import Components
 import SudokuGrid from './components/SudokuGrid.vue';
@@ -11,6 +12,8 @@ import GameEndModal from './components/GameEndModal.vue';
 // Import Services and Types
 import api from './services/api';
 import type { CellPosition, LeaderboardData } from './types';
+
+const toast = useToast();
 
 // State variables
 const gameId = ref<string | null>(null);
@@ -66,7 +69,7 @@ const fetchLeaderboard = async (): Promise<void> => {
         leaderboardData.value = response.data;
     } catch (err) {
         console.error("Failed to fetch leaderboard:", err);
-        alert("Could not load leaderboard data.");
+        toast.error("Could not load leaderboard data.");
     } finally {
          isLoading.value = false;
     }
@@ -135,7 +138,7 @@ const startGame = async (selectedDifficulty: string): Promise<void> => {
         startTimer();
     } catch (err: any) {
         console.error("Error starting game:", err);
-        alert(`Error starting game: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        toast.error(`Error starting game: ${err.response?.data?.message || err.message || 'Unknown error'}`);
         resetGameState();
     } finally {
         isLoading.value = false;
@@ -227,7 +230,7 @@ const handleNumberInput = async (value: number): Promise<void> => {
         }
     } catch (err: any) {
         console.error("Error checking value:", err);
-        alert(`Error checking value: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        toast.error(`Error checking value: ${err.response?.data?.message || err.message || 'Unknown error'}`);
         grid.value[row][col] = oldValue; // Revert on error
     }
 };
@@ -251,7 +254,7 @@ const requestHint = async (): Promise<void> => {
         const response = await api.useHint({ gameId: gameId.value });
         const hintData = response.data;
         if (hintData.error) {
-            alert(`Hint Error: ${hintData.error}`);
+            toast.error(`Hint Error: ${hintData.error}`);
             if (hintData.hintsUsed !== undefined) hintsUsed.value = hintData.hintsUsed;
             if (hintData.visibleValuesCount !== undefined) visibleCount.value = hintData.visibleValuesCount;
         } else if (hintData.rowIndex !== undefined && hintData.columnIndex !== undefined && hintData.value !== undefined) {
@@ -270,7 +273,7 @@ const requestHint = async (): Promise<void> => {
         }
     } catch (err: any) {
         console.error("Error getting hint:", err);
-        alert(`Error getting hint: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        toast.error(`Error getting hint: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
     }
@@ -291,13 +294,13 @@ const checkGameCompletion = async (): Promise<void> => {
             } catch (scoreErr: any) {
                 console.error("Error fetching score:", scoreErr);
                 finalScore.value = null;
-                alert(`Could not fetch final score: ${scoreErr.response?.data?.message || scoreErr.message || 'Unknown error'}`);
+                toast.error(`Could not fetch final score: ${scoreErr.response?.data?.message || scoreErr.message || 'Unknown error'}`);
             }
             showGameEndModal.value = true;
         }
     } catch (err: any) {
         console.error("Error checking completion:", err);
-        alert(`Error checking completion: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        toast.error(`Error checking completion: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
     }
@@ -311,11 +314,11 @@ const submitScore = async (username: string): Promise<void> => {
         await api.addLeaderboardRecord({ username, score: finalScore.value, difficulty: difficulty.value });
         showGameEndModal.value = false;
         await fetchLeaderboard();
-        alert(`Score submitted for ${username}!`);
+        toast.success(`Score submitted for ${username}!`);
         resetGameState();
     } catch (err: any) {
         console.error("Error submitting score:", err);
-        alert(`Error submitting score: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+        toast.error(`Error submitting score: ${err.response?.data?.message || err.message || 'Unknown error'}`);
     } finally {
         isLoading.value = false;
     }
@@ -427,16 +430,6 @@ const handleKeyDown = (event: KeyboardEvent): void => {
     }
 };
 
-// Lifecycle Hooks
-onMounted(() => {
-    fetchLeaderboard();
-    window.addEventListener('keydown', handleKeyDown);
-});
-
-onUnmounted(() => {
-    stopTimer();
-    window.removeEventListener('keydown', handleKeyDown);
-});
 </script>
 
 <template>
