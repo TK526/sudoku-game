@@ -26,4 +26,3 @@ Before you begin, ensure you have the following installed on your system:
 2. run docker-compose up
 3. play the game at: http://localhost:5173/
 4. run docker-compose down, after closing the game
-
