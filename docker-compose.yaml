@@ -1,0 +1,65 @@
+# docker-compose.yaml
+version: '3.8'
+
+services:
+  # Backend Service (NestJS)
+  backend:
+    build: ./sudoku-backend # Path to the backend directory containing its Dockerfile
+    container_name: sudoku-backend-app
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3000}:3000" # Map host port (default 3000) to container port 3000
+    depends_on:
+      - db # Wait for the database service to start (doesn't guarantee readiness)
+    environment:
+      # Pass database connection details to the backend container
+      # These MUST match the user/password/db created by the db service below
+      NODE_ENV: production # Important for NestJS optimizations and ConfigModule
+      DB_HOST: db           # Service name of the database container
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USER:-sudoku_user} # Read from .env or use default
+      DB_PASSWORD: ${DB_PASSWORD:-changeme} # Read from .env or use default (CHANGE THIS!)
+      DB_DATABASE: ${DB_NAME:-sudoku}     # Read from .env or use default
+      DB_SYNC: ${DB_SYNC:-false} # Disable synchronize in production by default
+    networks:
+      - sudoku-network
+
+  # Frontend Service (Vue + Nginx)
+  frontend:
+    build: ./sudoku-frontend # Path to the frontend directory containing its Dockerfile
+    container_name: sudoku-frontend-app
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80" # Map host port (default 5173) to container port 80 (Nginx)
+    depends_on:
+      - backend # Optional: Frontend might rely on backend being available
+    networks:
+      - sudoku-network
+
+  # Database Service (MySQL)
+  db:
+    image: mysql:8.0 # Use official MySQL 8 image
+    container_name: sudoku-db
+    restart: always
+    environment:
+      # Set up MySQL root password and create the application database/user
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-supersecret} # CHANGE THIS in .env
+      MYSQL_DATABASE: ${DB_NAME:-sudoku} # Use the same name as DB_DATABASE for backend
+      MYSQL_USER: ${DB_USER:-sudoku_user} # Use the same user as DB_USERNAME for backend
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme} # Use the same password as DB_PASSWORD for backend
+    ports:
+      # Optionally map host port 3307 (to avoid conflict with local MySQL) to container port 3306
+      - "${DB_HOST_PORT:-3307}:3306"
+    volumes:
+      - db_data:/var/lib/mysql # Persist database data using a named volume
+    networks:
+      - sudoku-network
+
+# Named volume for database persistence
+volumes:
+  db_data:
+
+# Define the network
+networks:
+  sudoku-network:
+    driver: bridge
